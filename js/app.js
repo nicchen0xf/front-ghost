@@ -1,6 +1,25 @@
 // ByteForce Frontend - Complete Application Logic
 // Configure your backend URL (Wispbyte host). On Vercel, set NEXT_PUBLIC_BACKEND_URL
-const BACKEND_URL = window.BACKEND_URL || (typeof process !== 'undefined' && process.env && process.env.NEXT_PUBLIC_BACKEND_URL) || 'http://87.106.82.92:14137';
+// Auto-detect protocol based on current page to avoid mixed content issues
+const getBackendUrl = () => {
+    // Check for explicit configuration first
+    if (window.BACKEND_URL) return window.BACKEND_URL;
+    if (typeof process !== 'undefined' && process.env && process.env.NEXT_PUBLIC_BACKEND_URL) {
+        return process.env.NEXT_PUBLIC_BACKEND_URL;
+    }
+    
+    // Auto-detect protocol to avoid mixed content issues
+    const protocol = window.location.protocol === 'https:' ? 'https:' : 'http:';
+    return `${protocol}//87.106.82.92:14137`;
+};
+
+const BACKEND_URL = getBackendUrl();
+
+// Log environment variables for debugging
+console.log('Environment check:');
+console.log('window.BACKEND_URL:', window.BACKEND_URL);
+console.log('process.env.NEXT_PUBLIC_BACKEND_URL:', typeof process !== 'undefined' && process.env ? process.env.NEXT_PUBLIC_BACKEND_URL : 'undefined');
+console.log('Final BACKEND_URL:', BACKEND_URL);
 
 // Global state
 let currentUser = null;
