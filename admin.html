@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ByteForce - Admin</title>
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <div class="topbar">
+    <div class="brand">BYTEFORCE</div>
+    <div>
+      <span id="userInfo"></span>
+      <button id="logoutBtn">Logout</button>
+    </div>
+  </div>
+
+  <div class="container">
+    <h2>Admin Dashboard</h2>
+
+    <div class="card">
+      <h3>Plan Stats</h3>
+      <pre id="planStats"></pre>
+    </div>
+
+    <div class="card">
+      <h3>Resellers</h3>
+      <form id="createResellerForm" style="display:flex; gap:8px; flex-wrap:wrap;">
+        <input name="username" placeholder="Username" required />
+        <input name="password" placeholder="Password" required />
+        <select name="plan">
+          <option value="basic">Basic</option>
+          <option value="standard">Standard</option>
+          <option value="premium">Premium</option>
+        </select>
+        <button type="submit">Create</button>
+      </form>
+      <ul id="resellers"></ul>
+    </div>
+
+    <div class="card">
+      <h3>Recent Logs</h3>
+      <ul id="adminLogs"></ul>
+    </div>
+  </div>
+
+  <script src="/js/app.js"></script>
+  <script>
+    (async function initAdmin(){
+      if (!getToken()) { location.href = '/'; return; }
+      const me = await api('/api/auth/me').catch(()=>null);
+      if (!me || me.role !== 'admin') { location.href = '/dashboard.html'; return; }
+      document.getElementById('userInfo').textContent = `${me.username} (${me.role})`;
+      const planStats = await api('/api/admin/plan-stats');
+      document.getElementById('planStats').textContent = JSON.stringify(planStats, null, 2);
+      await loadResellers();
+      await loadAdminLogs();
+
+      document.getElementById('createResellerForm').addEventListener('submit', async (e)=>{
+        e.preventDefault();
+        const fd = new FormData(e.currentTarget);
+        const payload = { username: fd.get('username'), password: fd.get('password'), plan: fd.get('plan') };
+        try {
+          await api('/api/admin/resellers', { method: 'POST', body: JSON.stringify(payload) });
+          e.currentTarget.reset();
+          await loadResellers();
+        } catch(err){ alert(err.message); }
+      });
+    })();
+
+    async function loadResellers(){
+      const list = await api('/api/admin/resellers');
+      const ul = document.getElementById('resellers');
+      ul.innerHTML = '';
+      for (const r of list){
+        const li = document.createElement('li');
+        li.textContent = `${r.username} - ${r.plan} - $${r.balance.toFixed(2)} - ${r.is_active ? 'active' : 'inactive'}`;
+        const actions = document.createElement('span');
+        actions.style.float = 'right';
+        const credit = document.createElement('button'); credit.textContent = 'Credit'; credit.onclick = ()=>amountPrompt(r.id, true);
+        const debit = document.createElement('button'); debit.style.marginLeft='8px'; debit.textContent = 'Debit'; debit.onclick = ()=>amountPrompt(r.id, false);
+        const toggle = document.createElement('button'); toggle.style.marginLeft='8px'; toggle.textContent = r.is_active ? 'Deactivate' : 'Activate'; toggle.onclick = async ()=>{ await api(`/api/admin/resellers/${r.id}/toggle`, { method: 'POST' }); loadResellers(); };
+        const del = document.createElement('button'); del.style.marginLeft='8px'; del.textContent = 'Delete'; del.onclick = async ()=>{ if(confirm('Delete reseller and all data?')) { await api(`/api/admin/resellers/${r.id}`, { method: 'DELETE' }); loadResellers(); } };
+        actions.append(credit, debit, toggle, del);
+        li.appendChild(actions);
+        ul.appendChild(li);
+      }
+    }
+
+    async function amountPrompt(id, isCredit){
+      const raw = prompt(isCredit ? 'Credit amount' : 'Debit amount');
+      if (!raw) return;
+      const amt = parseFloat(raw);
+      if (!(amt > 0)) return;
+      const url = isCredit ? `/api/admin/resellers/${id}/credit` : `/api/admin/resellers/${id}/debit`;
+      await api(url, { method: 'POST', body: JSON.stringify({ amount: amt }) });
+      await loadResellers();
+    }
+
+    async function loadAdminLogs(){
+      const items = await api('/api/admin/logs?limit=100');
+      const ul = document.getElementById('adminLogs');
+      ul.innerHTML = '';
+      for (const l of items){
+        const li = document.createElement('li');
+        li.textContent = `${new Date(l.timestamp).toLocaleString()} - [${l.user_id}] ${l.action} - ${l.details || ''}`;
+        ul.appendChild(li);
+      }
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ByteForce - Dashboard</title>
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <div class="topbar">
+    <div class="brand">BYTEFORCE</div>
+    <div>
+      <span id="userInfo"></span>
+      <button id="logoutBtn">Logout</button>
+    </div>
+  </div>
+
+  <div class="container">
+    <h2>Dashboard</h2>
+
+    <div class="card">
+      <h3>Stats</h3>
+      <pre id="stats"></pre>
+    </div>
+
+    <div class="card">
+      <h3>Whitelists</h3>
+      <div>
+        <form id="addForm">
+          <input name="uid" placeholder="UID" required />
+          <select name="region">
+            <option>IND</option>
+            <option>BD</option>
+            <option>ME</option>
+            <option>VN</option>
+            <option>SAC</option>
+          </select>
+          <select name="duration_days">
+            <option value="7">7</option>
+            <option value="30">30</option>
+            <option value="60">60</option>
+            <option value="365">365</option>
+          </select>
+          <button type="submit">Add</button>
+        </form>
+      </div>
+      <ul id="whitelists"></ul>
+    </div>
+
+    <div class="card">
+      <h3>Activity Logs</h3>
+      <ul id="logs"></ul>
+    </div>
+  </div>
+
+  <script src="/js/app.js"></script>
+</body>
+</html>
