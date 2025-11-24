@@ -1,58 +1,244 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>ByteForce - Dashboard</title>
-  <link rel="stylesheet" href="/styles.css" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - ByteForce</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
-  <div class="topbar">
-    <div class="brand">BYTEFORCE</div>
-    <div>
-      <span id="userInfo"></span>
-      <button id="logoutBtn">Logout</button>
+    <div class="dashboard-layout">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <a href="/dashboard.html" class="sidebar-brand">
+                <i class="fas fa-shield-alt"></i>
+                <h3>BYTEFORCE</h3>
+            </a>
+            
+            <ul class="sidebar-nav" id="sidebarNav">
+                <!-- Navigation will be populated by JS -->
+            </ul>
+            
+            <!-- User Info Panel -->
+            <div class="user-info-panel">
+                <div class="user-info-row">
+                    <div class="user-avatar-section">
+                        <div class="user-avatar">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        <a href="#" class="logout-btn" id="logoutBtn" title="Logout">
+                            <i class="fas fa-sign-out-alt"></i>
+                        </a>
+                    </div>
+                    <div class="user-info-content" id="userInfoContent">
+                        <!-- User info will be populated by JS -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Top Bar -->
+            <div class="top-bar">
+                <h1 class="page-title">Dashboard Overview</h1>
+                <div class="user-menu">
+                    <span style="color: var(--text-secondary); font-size: 14px;" id="topBarUser">
+                        <i class="fas fa-user-circle"></i> <span id="topBarUsername"></span>
+                    </span>
+                    <button class="btn btn-secondary btn-sm" id="topBarLogout">
+                        <i class="fas fa-sign-out-alt"></i> Logout
+                    </button>
+                </div>
+            </div>
+
+            <!-- Content -->
+            <div class="content">
+                <div id="alert" class="alert hidden"></div>
+
+                <!-- Stats Grid -->
+                <div class="stats-grid" id="statsGrid">
+                    <!-- Stats will be populated by JS -->
+                </div>
+
+                <!-- Quick Actions (Reseller Only) -->
+                <div class="card" id="quickActionsCard" style="display: none;">
+                    <div class="card-header">
+                        <h5 class="card-title">
+                            <i class="fas fa-bolt"></i>
+                            Quick Actions
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 16px;">
+                            <button class="btn btn-success btn-lg" style="width: 100%;" onclick="showAddWhitelistModal()">
+                                <i class="fas fa-plus"></i> Add Whitelist
+                            </button>
+                            <a href="#" class="btn btn-primary btn-lg" style="width: 100%;" onclick="showWhitelistsSection()">
+                                <i class="fas fa-list"></i> View All Whitelists
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Pricing (Reseller Only) -->
+                <div class="card" id="pricingCard" style="display: none;">
+                    <div class="card-header">
+                        <h5 class="card-title">
+                            <i class="fas fa-dollar-sign"></i>
+                            Pricing Plans
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div id="pricingGrid">
+                            <!-- Pricing will be populated by JS -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Whitelists Section -->
+                <div class="card" id="whitelistsSection">
+                    <div class="card-header">
+                        <h5 class="card-title">
+                            <i class="fas fa-list"></i>
+                            Whitelists Management
+                        </h5>
+                        <button class="btn btn-primary btn-sm" onclick="showAddWhitelistModal()">
+                            <i class="fas fa-plus"></i> Add Whitelist
+                        </button>
+                    </div>
+                    <div class="card-body">
+                        <!-- Filters -->
+                        <div class="form-row" style="margin-bottom: var(--spacing-lg);">
+                            <div class="form-group">
+                                <label>Filter by Region:</label>
+                                <select id="regionFilter">
+                                    <option value="all">All Regions</option>
+                                    <option value="IND">India</option>
+                                    <option value="BD">Bangladesh</option>
+                                    <option value="BR">Brazil</option>
+                                    <option value="ME">Middle East</option>
+                                    <option value="VN">Vietnam</option>
+                                    <option value="TH">Thailand</option>
+                                    <option value="CIS">CIS</option>
+                                    <option value="PK">Pakistan</option>
+                                    <option value="SG">Singapore</option>
+                                    <option value="NA">North America</option>
+                                    <option value="SAC">South America</option>
+                                    <option value="EU">Europe</option>
+                                    <option value="TW">Taiwan</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Filter by Status:</label>
+                                <select id="statusFilter">
+                                    <option value="all">All Status</option>
+                                    <option value="active">Active</option>
+                                    <option value="expired">Expired</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="table-container">
+                            <table id="whitelistsTable">
+                                <thead>
+                                    <tr>
+                                        <th>UID</th>
+                                        <th>Region</th>
+                                        <th>Expires At</th>
+                                        <th>Status</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="whitelistsTableBody">
+                                    <!-- Populated by JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Activity -->
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="card-title">
+                            <i class="fas fa-history"></i>
+                            Recent Activity
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-container">
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Time</th>
+                                        <th>Action</th>
+                                        <th>Details</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="activityTableBody">
+                                    <!-- Populated by JS -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
-  </div>
 
-  <div class="container">
-    <h2>Dashboard</h2>
-
-    <div class="card">
-      <h3>Stats</h3>
-      <pre id="stats"></pre>
+    <!-- Add Whitelist Modal -->
+    <div id="addWhitelistModal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Add Whitelist</h3>
+                <button class="close-btn" onclick="hideAddWhitelistModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <form id="addWhitelistForm">
+                <div class="form-group">
+                    <label>UID:</label>
+                    <input type="text" name="uid" required placeholder="Enter UID">
+                </div>
+                <div class="form-group">
+                    <label>Region:</label>
+                    <select name="region" required>
+                        <option value="IND">India</option>
+                        <option value="BD">Bangladesh</option>
+                        <option value="BR">Brazil</option>
+                        <option value="ME">Middle East</option>
+                        <option value="VN">Vietnam</option>
+                        <option value="TH">Thailand</option>
+                        <option value="CIS">CIS</option>
+                        <option value="PK">Pakistan</option>
+                        <option value="SG">Singapore</option>
+                        <option value="NA">North America</option>
+                        <option value="SAC">South America</option>
+                        <option value="EU">Europe</option>
+                        <option value="TW">Taiwan</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Duration:</label>
+                    <select name="duration_days" required>
+                        <option value="7">7 Days - $2.00</option>
+                        <option value="30">30 Days - $5.00</option>
+                        <option value="60">60 Days - $15.00</option>
+                        <option value="365">365 Days - $35.00</option>
+                    </select>
+                </div>
+                <div style="display: flex; gap: var(--spacing-md); justify-content: flex-end;">
+                    <button type="button" class="btn btn-secondary" onclick="hideAddWhitelistModal()">Cancel</button>
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-plus"></i> Add Whitelist
+                    </button>
+                </div>
+            </form>
+        </div>
     </div>
 
-    <div class="card">
-      <h3>Whitelists</h3>
-      <div>
-        <form id="addForm">
-          <input name="uid" placeholder="UID" required />
-          <select name="region">
-            <option>IND</option>
-            <option>BD</option>
-            <option>ME</option>
-            <option>VN</option>
-            <option>SAC</option>
-          </select>
-          <select name="duration_days">
-            <option value="7">7</option>
-            <option value="30">30</option>
-            <option value="60">60</option>
-            <option value="365">365</option>
-          </select>
-          <button type="submit">Add</button>
-        </form>
-      </div>
-      <ul id="whitelists"></ul>
-    </div>
-
-    <div class="card">
-      <h3>Activity Logs</h3>
-      <ul id="logs"></ul>
-    </div>
-  </div>
-
-  <script src="/js/app.js"></script>
+    <script src="/js/app.js"></script>
 </body>
 </html>

@@ -1,112 +1,435 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>ByteForce - Admin</title>
-  <link rel="stylesheet" href="/styles.css" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - ByteForce</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="/styles.css">
 </head>
 <body>
-  <div class="topbar">
-    <div class="brand">BYTEFORCE</div>
-    <div>
-      <span id="userInfo"></span>
-      <button id="logoutBtn">Logout</button>
+    <div class="dashboard-layout">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <a href="/admin.html" class="sidebar-brand">
+                <i class="fas fa-shield-alt"></i>
+                <h3>BYTEFORCE</h3>
+            </a>
+            
+            <ul class="sidebar-nav">
+                <li class="sidebar-nav-item">
+                    <a href="/admin.html" class="sidebar-nav-link active">
+                        <i class="fas fa-home"></i>
+                        <span>Dashboard</span>
+                    </a>
+                </li>
+                <li class="sidebar-nav-item">
+                    <a href="#" class="sidebar-nav-link" onclick="showResellersSection()">
+                        <i class="fas fa-users"></i>
+                        <span>Resellers</span>
+                    </a>
+                </li>
+                <li class="sidebar-nav-item">
+                    <a href="#" class="sidebar-nav-link" onclick="showWhitelistsSection()">
+                        <i class="fas fa-id-card"></i>
+                        <span>UID Management</span>
+                    </a>
+                </li>
+                <li class="sidebar-nav-item">
+                    <a href="#" class="sidebar-nav-link" onclick="showPlansSection()">
+                        <i class="fas fa-crown"></i>
+                        <span>Seller Plans</span>
+                    </a>
+                </li>
+                <li class="sidebar-nav-item">
+                    <a href="#" class="sidebar-nav-link" onclick="showLogsSection()">
+                        <i class="fas fa-file-alt"></i>
+                        <span>Activity Logs</span>
+                    </a>
+                </li>
+            </ul>
+            
+            <!-- User Info Panel -->
+            <div class="user-info-panel">
+                <div class="user-info-row">
+                    <div class="user-avatar-section">
+                        <div class="user-avatar">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        <a href="#" class="logout-btn" id="logoutBtn" title="Logout">
+                            <i class="fas fa-sign-out-alt"></i>
+                        </a>
+                    </div>
+                    <div class="user-info-content" id="userInfoContent">
+                        <!-- User info will be populated by JS -->
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Top Bar -->
+            <div class="top-bar">
+                <h1 class="page-title" id="pageTitle">Admin Dashboard</h1>
+                <div class="user-menu">
+                    <span style="color: var(--text-secondary); font-size: 14px;" id="topBarUser">
+                        <i class="fas fa-user-circle"></i> <span id="topBarUsername"></span>
+                    </span>
+                    <button class="btn btn-secondary btn-sm" id="topBarLogout">
+                        <i class="fas fa-sign-out-alt"></i> Logout
+                    </button>
+                </div>
+            </div>
+
+            <!-- Content -->
+            <div class="content">
+                <div id="alert" class="alert hidden"></div>
+
+                <!-- Dashboard Overview Section -->
+                <div id="dashboardSection">
+                    <!-- Stats Grid -->
+                    <div class="stats-grid" id="statsGrid">
+                        <!-- Stats will be populated by JS -->
+                    </div>
+
+                    <!-- Plan Stats -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title">
+                                <i class="fas fa-chart-bar"></i>
+                                Plan Statistics
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div id="planStatsGrid">
+                                <!-- Plan stats will be populated by JS -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Recent Activity -->
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title">
+                                <i class="fas fa-history"></i>
+                                Recent Activity
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-container">
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>Time</th>
+                                            <th>User</th>
+                                            <th>Action</th>
+                                            <th>Details</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="activityTableBody">
+                                        <!-- Populated by JS -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Resellers Section -->
+                <div id="resellersSection" class="hidden">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title">
+                                <i class="fas fa-users"></i>
+                                Resellers Management
+                            </h5>
+                            <button class="btn btn-primary btn-sm" onclick="showAddResellerModal()">
+                                <i class="fas fa-plus"></i> Add Reseller
+                            </button>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-container">
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>Username</th>
+                                            <th>Plan</th>
+                                            <th>Balance</th>
+                                            <th>Status</th>
+                                            <th>Created</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="resellersTableBody">
+                                        <!-- Populated by JS -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Whitelists Section -->
+                <div id="whitelistsSection" class="hidden">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title">
+                                <i class="fas fa-id-card"></i>
+                                UID Management
+                            </h5>
+                            <button class="btn btn-primary btn-sm" onclick="showAddWhitelistModal()">
+                                <i class="fas fa-plus"></i> Add Whitelist
+                            </button>
+                        </div>
+                        <div class="card-body">
+                            <!-- Filters -->
+                            <div class="form-row" style="margin-bottom: var(--spacing-lg);">
+                                <div class="form-group">
+                                    <label>Filter by Region:</label>
+                                    <select id="regionFilter">
+                                        <option value="all">All Regions</option>
+                                        <option value="IND">India</option>
+                                        <option value="BD">Bangladesh</option>
+                                        <option value="BR">Brazil</option>
+                                        <option value="ME">Middle East</option>
+                                        <option value="VN">Vietnam</option>
+                                        <option value="TH">Thailand</option>
+                                        <option value="CIS">CIS</option>
+                                        <option value="PK">Pakistan</option>
+                                        <option value="SG">Singapore</option>
+                                        <option value="NA">North America</option>
+                                        <option value="SAC">South America</option>
+                                        <option value="EU">Europe</option>
+                                        <option value="TW">Taiwan</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Filter by Status:</label>
+                                    <select id="statusFilter">
+                                        <option value="all">All Status</option>
+                                        <option value="active">Active</option>
+                                        <option value="expired">Expired</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="table-container">
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>UID</th>
+                                            <th>Region</th>
+                                            <th>Seller</th>
+                                            <th>Expires At</th>
+                                            <th>Status</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="adminWhitelistsTableBody">
+                                        <!-- Populated by JS -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Plans Section -->
+                <div id="plansSection" class="hidden">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title">
+                                <i class="fas fa-crown"></i>
+                                Seller Plans
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: var(--spacing-lg);">
+                                <!-- Basic Plan -->
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h6 style="color: var(--info-color); margin: 0;">Basic Plan</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div style="text-align: center; margin-bottom: var(--spacing-lg);">
+                                            <div style="font-size: 2rem; font-weight: 700; color: var(--text-primary);">₹1,999</div>
+                                            <div style="color: var(--text-muted);">Starting Balance: $25</div>
+                                        </div>
+                                        <ul style="list-style: none; padding: 0;">
+                                            <li style="padding: var(--spacing-xs) 0; color: var(--text-secondary);"><i class="fas fa-check" style="color: var(--success-color); margin-right: var(--spacing-sm);"></i> Basic whitelist management</li>
+                                            <li style="padding: var(--spacing-xs) 0; color: var(--text-secondary);"><i class="fas fa-check" style="color: var(--success-color); margin-right: var(--spacing-sm);"></i> Standard support</li>
+                                            <li style="padding: var(--spacing-xs) 0; color: var(--text-secondary);"><i class="fas fa-check" style="color: var(--success-color); margin-right: var(--spacing-sm);"></i> Activity logs</li>
+                                        </ul>
+                                    </div>
+                                </div>
+
+                                <!-- Standard Plan -->
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h6 style="color: var(--primary-color); margin: 0;">Standard Plan</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div style="text-align: center; margin-bottom: var(--spacing-lg);">
+                                            <div style="font-size: 2rem; font-weight: 700; color: var(--text-primary);">₹4,999</div>
+                                            <div style="color: var(--text-muted);">Starting Balance: $50</div>
+                                        </div>
+                                        <ul style="list-style: none; padding: 0;">
+                                            <li style="padding: var(--spacing-xs) 0; color: var(--text-secondary);"><i class="fas fa-check" style="color: var(--success-color); margin-right: var(--spacing-sm);"></i> All Basic features</li>
+                                            <li style="padding: var(--spacing-xs) 0; color: var(--text-secondary);"><i class="fas fa-check" style="color: var(--success-color); margin-right: var(--spacing-sm);"></i> Priority support</li>
+                                            <li style="padding: var(--spacing-xs) 0; color: var(--text-secondary);"><i class="fas fa-check" style="color: var(--success-color); margin-right: var(--spacing-sm);"></i> Advanced analytics</li>
+                                        </ul>
+                                    </div>
+                                </div>
+
+                                <!-- Premium Plan -->
+                                <div class="card">
+                                    <div class="card-header">
+                                        <h6 style="color: var(--warning-color); margin: 0;">Premium Plan</h6>
+                                    </div>
+                                    <div class="card-body">
+                                        <div style="text-align: center; margin-bottom: var(--spacing-lg);">
+                                            <div style="font-size: 2rem; font-weight: 700; color: var(--text-primary);">₹7,999</div>
+                                            <div style="color: var(--text-muted);">Starting Balance: $999,999</div>
+                                        </div>
+                                        <ul style="list-style: none; padding: 0;">
+                                            <li style="padding: var(--spacing-xs) 0; color: var(--text-secondary);"><i class="fas fa-check" style="color: var(--success-color); margin-right: var(--spacing-sm);"></i> All Standard features</li>
+                                            <li style="padding: var(--spacing-xs) 0; color: var(--text-secondary);"><i class="fas fa-check" style="color: var(--success-color); margin-right: var(--spacing-sm);"></i> Unlimited balance</li>
+                                            <li style="padding: var(--spacing-xs) 0; color: var(--text-secondary);"><i class="fas fa-check" style="color: var(--success-color); margin-right: var(--spacing-sm);"></i> 24/7 premium support</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Logs Section -->
+                <div id="logsSection" class="hidden">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="card-title">
+                                <i class="fas fa-file-alt"></i>
+                                Activity Logs
+                            </h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-container">
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>Time</th>
+                                            <th>User ID</th>
+                                            <th>Action</th>
+                                            <th>Details</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="logsTableBody">
+                                        <!-- Populated by JS -->
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
     </div>
-  </div>
 
-  <div class="container">
-    <h2>Admin Dashboard</h2>
-
-    <div class="card">
-      <h3>Plan Stats</h3>
-      <pre id="planStats"></pre>
+    <!-- Add Reseller Modal -->
+    <div id="addResellerModal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Add Reseller</h3>
+                <button class="close-btn" onclick="hideAddResellerModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <form id="addResellerForm">
+                <div class="form-group">
+                    <label>Username:</label>
+                    <input type="text" name="username" required placeholder="Enter username">
+                </div>
+                <div class="form-group">
+                    <label>Password:</label>
+                    <input type="password" name="password" required placeholder="Enter password">
+                </div>
+                <div class="form-group">
+                    <label>Plan:</label>
+                    <select name="plan" required>
+                        <option value="basic">Basic - ₹1,999 ($25 balance)</option>
+                        <option value="standard">Standard - ₹4,999 ($50 balance)</option>
+                        <option value="premium">Premium - ₹7,999 (Unlimited balance)</option>
+                    </select>
+                </div>
+                <div style="display: flex; gap: var(--spacing-md); justify-content: flex-end;">
+                    <button type="button" class="btn btn-secondary" onclick="hideAddResellerModal()">Cancel</button>
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-plus"></i> Create Reseller
+                    </button>
+                </div>
+            </form>
+        </div>
     </div>
 
-    <div class="card">
-      <h3>Resellers</h3>
-      <form id="createResellerForm" style="display:flex; gap:8px; flex-wrap:wrap;">
-        <input name="username" placeholder="Username" required />
-        <input name="password" placeholder="Password" required />
-        <select name="plan">
-          <option value="basic">Basic</option>
-          <option value="standard">Standard</option>
-          <option value="premium">Premium</option>
-        </select>
-        <button type="submit">Create</button>
-      </form>
-      <ul id="resellers"></ul>
+    <!-- Add Whitelist Modal -->
+    <div id="addWhitelistModal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3 class="modal-title">Add Whitelist</h3>
+                <button class="close-btn" onclick="hideAddWhitelistModal()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <form id="addWhitelistForm">
+                <div class="form-group">
+                    <label>UID:</label>
+                    <input type="text" name="uid" required placeholder="Enter UID">
+                </div>
+                <div class="form-group">
+                    <label>Region:</label>
+                    <select name="region" required>
+                        <option value="IND">India</option>
+                        <option value="BD">Bangladesh</option>
+                        <option value="BR">Brazil</option>
+                        <option value="ME">Middle East</option>
+                        <option value="VN">Vietnam</option>
+                        <option value="TH">Thailand</option>
+                        <option value="CIS">CIS</option>
+                        <option value="PK">Pakistan</option>
+                        <option value="SG">Singapore</option>
+                        <option value="NA">North America</option>
+                        <option value="SAC">South America</option>
+                        <option value="EU">Europe</option>
+                        <option value="TW">Taiwan</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Duration:</label>
+                    <select name="duration_days" required>
+                        <option value="7">7 Days - $2.00</option>
+                        <option value="30">30 Days - $5.00</option>
+                        <option value="60">60 Days - $15.00</option>
+                        <option value="365">365 Days - $35.00</option>
+                    </select>
+                </div>
+                <div class="form-group" id="resellerSelectGroup">
+                    <label>Assign to Reseller:</label>
+                    <select name="reseller_id" id="resellerSelect">
+                        <!-- Populated by JS -->
+                    </select>
+                </div>
+                <div style="display: flex; gap: var(--spacing-md); justify-content: flex-end;">
+                    <button type="button" class="btn btn-secondary" onclick="hideAddWhitelistModal()">Cancel</button>
+                    <button type="submit" class="btn btn-success">
+                        <i class="fas fa-plus"></i> Add Whitelist
+                    </button>
+                </div>
+            </form>
+        </div>
     </div>
 
-    <div class="card">
-      <h3>Recent Logs</h3>
-      <ul id="adminLogs"></ul>
-    </div>
-  </div>
-
-  <script src="/js/app.js"></script>
-  <script>
-    (async function initAdmin(){
-      if (!getToken()) { location.href = '/'; return; }
-      const me = await api('/api/auth/me').catch(()=>null);
-      if (!me || me.role !== 'admin') { location.href = '/dashboard.html'; return; }
-      document.getElementById('userInfo').textContent = `${me.username} (${me.role})`;
-      const planStats = await api('/api/admin/plan-stats');
-      document.getElementById('planStats').textContent = JSON.stringify(planStats, null, 2);
-      await loadResellers();
-      await loadAdminLogs();
-
-      document.getElementById('createResellerForm').addEventListener('submit', async (e)=>{
-        e.preventDefault();
-        const fd = new FormData(e.currentTarget);
-        const payload = { username: fd.get('username'), password: fd.get('password'), plan: fd.get('plan') };
-        try {
-          await api('/api/admin/resellers', { method: 'POST', body: JSON.stringify(payload) });
-          e.currentTarget.reset();
-          await loadResellers();
-        } catch(err){ alert(err.message); }
-      });
-    })();
-
-    async function loadResellers(){
-      const list = await api('/api/admin/resellers');
-      const ul = document.getElementById('resellers');
-      ul.innerHTML = '';
-      for (const r of list){
-        const li = document.createElement('li');
-        li.textContent = `${r.username} - ${r.plan} - $${r.balance.toFixed(2)} - ${r.is_active ? 'active' : 'inactive'}`;
-        const actions = document.createElement('span');
-        actions.style.float = 'right';
-        const credit = document.createElement('button'); credit.textContent = 'Credit'; credit.onclick = ()=>amountPrompt(r.id, true);
-        const debit = document.createElement('button'); debit.style.marginLeft='8px'; debit.textContent = 'Debit'; debit.onclick = ()=>amountPrompt(r.id, false);
-        const toggle = document.createElement('button'); toggle.style.marginLeft='8px'; toggle.textContent = r.is_active ? 'Deactivate' : 'Activate'; toggle.onclick = async ()=>{ await api(`/api/admin/resellers/${r.id}/toggle`, { method: 'POST' }); loadResellers(); };
-        const del = document.createElement('button'); del.style.marginLeft='8px'; del.textContent = 'Delete'; del.onclick = async ()=>{ if(confirm('Delete reseller and all data?')) { await api(`/api/admin/resellers/${r.id}`, { method: 'DELETE' }); loadResellers(); } };
-        actions.append(credit, debit, toggle, del);
-        li.appendChild(actions);
-        ul.appendChild(li);
-      }
-    }
-
-    async function amountPrompt(id, isCredit){
-      const raw = prompt(isCredit ? 'Credit amount' : 'Debit amount');
-      if (!raw) return;
-      const amt = parseFloat(raw);
-      if (!(amt > 0)) return;
-      const url = isCredit ? `/api/admin/resellers/${id}/credit` : `/api/admin/resellers/${id}/debit`;
-      await api(url, { method: 'POST', body: JSON.stringify({ amount: amt }) });
-      await loadResellers();
-    }
-
-    async function loadAdminLogs(){
-      const items = await api('/api/admin/logs?limit=100');
-      const ul = document.getElementById('adminLogs');
-      ul.innerHTML = '';
-      for (const l of items){
-        const li = document.createElement('li');
-        li.textContent = `${new Date(l.timestamp).toLocaleString()} - [${l.user_id}] ${l.action} - ${l.details || ''}`;
-        ul.appendChild(li);
-      }
-    }
-  </script>
+    <script src="/js/app.js"></script>
+    <script src="/js/admin.js"></script>
 </body>
 </html>
