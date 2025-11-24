@@ -35,7 +35,7 @@ function saveToken(token) { localStorage.setItem('bf_token', token); }
 function getToken() { return localStorage.getItem('bf_token'); }
 function clearToken() { localStorage.removeItem('bf_token'); }
 
-// API helper with fallback for HTTPS/HTTP issues
+// API helper with fallback for HTTPS/HTTP issues and CORS proxy
 async function api(path, options = {}) {
     const headers = Object.assign({'Content-Type': 'application/json'}, options.headers || {});
     const token = getToken();
@@ -43,9 +43,12 @@ async function api(path, options = {}) {
     
     try {
         console.log(`Making API request to: ${BACKEND_URL}${path}`);
+        
+        // First try direct request
         const res = await fetch(`${BACKEND_URL}${path}`, {
             ...options,
             headers,
+            mode: 'cors'
         });
         
         if (!res.ok) {
@@ -61,12 +64,31 @@ async function api(path, options = {}) {
     } catch (error) {
         console.error('API Error:', error);
         
-        // If HTTPS fails and we're on HTTPS, suggest HTTP fallback
-        if (error.name === 'TypeError' && error.message.includes('Failed to fetch') && 
-            window.location.protocol === 'https:' && BACKEND_URL.startsWith('https:')) {
+        // If direct request fails and we're on HTTPS trying HTTP, try CORS proxy
+        if (error.name === 'TypeError' && window.location.protocol === 'https:' && 
+            (BACKEND_URL.startsWith('http://') || error.message.includes('Mixed Content'))) {
             
-            console.warn('HTTPS request failed, this might be due to missing SSL certificate on backend');
-            throw new Error('Connection failed: Backend server may not support HTTPS. Please configure SSL certificate or use HTTP backend URL.');
+            console.log('Trying CORS proxy for mixed content issue...');
+            try {
+                const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(BACKEND_URL + path)}`;
+                const proxyRes = await fetch(proxyUrl, {
+                    ...options,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        // Note: Authorization headers might be stripped by proxy
+                    }
+                });
+                
+                if (proxyRes.ok) {
+                    const data = await proxyRes.json();
+                    console.log('CORS proxy request successful');
+                    return data;
+                }
+            } catch (proxyError) {
+                console.error('CORS proxy also failed:', proxyError);
+            }
+            
+            throw new Error('Mixed content blocked: HTTPS site cannot connect to HTTP backend. Please use HTTPS backend or deploy frontend on HTTP.');
         }
         
         throw error;
@@ -91,14 +113,35 @@ function hideAlert() {
 // Connection testing function
 async function testConnection(url) {
     try {
+        // Try direct connection first
         const response = await fetch(`${url}/api/health`, { 
             method: 'GET',
-            timeout: 5000
+            timeout: 5000,
+            mode: 'cors'
         });
-        return response.ok;
-    } catch {
-        return false;
+        if (response.ok) return true;
+    } catch (directError) {
+        console.log(`Direct connection to ${url} failed:`, directError);
     }
+    
+    // If direct fails and we're on HTTPS trying HTTP, try CORS proxy
+    if (window.location.protocol === 'https:' && url.startsWith('http://')) {
+        try {
+            const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(url + '/api/health')}`;
+            const proxyResponse = await fetch(proxyUrl, { 
+                method: 'GET',
+                timeout: 5000
+            });
+            if (proxyResponse.ok) {
+                console.log(`CORS proxy connection to ${url} successful`);
+                return true;
+            }
+        } catch (proxyError) {
+            console.log(`CORS proxy connection to ${url} failed:`, proxyError);
+        }
+    }
+    
+    return false;
 }
 
 // Try alternative backend URLs
@@ -106,7 +149,8 @@ async function findWorkingBackend() {
     const alternatives = [
         BACKEND_URL,
         'http://87.106.62.92:14137',
-        'https://87.106.62.92:14137'
+        'https://87.106.62.92:14137',
+        'http://172.18.0.30:14137'
     ];
     
     for (const url of alternatives) {
