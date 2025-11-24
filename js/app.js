@@ -196,20 +196,61 @@ function initLogin() {
             });
             
             console.log('Login response:', resp);
+            console.log('Response type:', typeof resp);
+            console.log('Response keys:', Object.keys(resp || {}));
             
-            saveToken(resp.token);
-            currentUser = resp.user;
+            // Handle different response formats
+            let token, user;
+            if (resp && typeof resp === 'object') {
+                // Check if response has success field (backend format)
+                if (resp.success !== undefined && !resp.success) {
+                    throw new Error(resp.message || 'Login failed');
+                }
+                
+                token = resp.token || resp.access_token;
+                user = resp.user || resp.data;
+                
+                // If no separate user object, the response might be the user data
+                if (!user && resp.username) {
+                    user = resp;
+                }
+            } else {
+                throw new Error('Invalid response format from server');
+            }
+            
+            if (!token) {
+                throw new Error('No token received from server');
+            }
+            
+            if (!user || !user.username) {
+                throw new Error('No user data received from server');
+            }
+            
+            console.log('Extracted token:', token ? 'Present' : 'Missing');
+            console.log('Extracted user:', user);
+            console.log('User role:', user.role);
+            
+            saveToken(token);
+            currentUser = user;
             
             showAlert('Login successful! Redirecting...', 'success');
             
-            // Redirect based on role
+            // Redirect based on role with better debugging
             setTimeout(() => {
-                if (resp.user.role === 'admin') {
+                const userRole = user.role;
+                console.log('User role for redirect:', userRole);
+                
+                if (userRole === 'admin') {
+                    console.log('Redirecting to admin dashboard...');
                     window.location.href = '/admin.html';
+                } else if (userRole === 'reseller') {
+                    console.log('Redirecting to reseller dashboard...');
+                    window.location.href = '/dashboard.html';
                 } else {
+                    console.log('Unknown role, redirecting to default dashboard...');
                     window.location.href = '/dashboard.html';
                 }
-            }, 500);
+            }, 1500);
             
         } catch (err) {
             console.error('Login error:', err);
