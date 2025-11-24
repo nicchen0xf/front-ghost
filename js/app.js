@@ -8,12 +8,16 @@ const getBackendUrl = () => {
         return process.env.NEXT_PUBLIC_BACKEND_URL;
     }
     
+    // Check for manual protocol override in localStorage
+    const manualUrl = localStorage.getItem('bf_backend_url');
+    if (manualUrl) return manualUrl;
+    
     // Auto-detect protocol to avoid mixed content issues
     const protocol = window.location.protocol === 'https:' ? 'https:' : 'http:';
-    return `${protocol}//87.106.82.92:14137`;
+    return `${protocol}//87.106.62.92:14137`;
 };
 
-const BACKEND_URL = getBackendUrl();
+let BACKEND_URL = getBackendUrl();
 
 // Log environment variables for debugging
 console.log('Environment check:');
@@ -31,13 +35,14 @@ function saveToken(token) { localStorage.setItem('bf_token', token); }
 function getToken() { return localStorage.getItem('bf_token'); }
 function clearToken() { localStorage.removeItem('bf_token'); }
 
-// API helper
+// API helper with fallback for HTTPS/HTTP issues
 async function api(path, options = {}) {
     const headers = Object.assign({'Content-Type': 'application/json'}, options.headers || {});
     const token = getToken();
     if (token) headers['Authorization'] = `Bearer ${token}`;
     
     try {
+        console.log(`Making API request to: ${BACKEND_URL}${path}`);
         const res = await fetch(`${BACKEND_URL}${path}`, {
             ...options,
             headers,
@@ -55,6 +60,15 @@ async function api(path, options = {}) {
         return res.text();
     } catch (error) {
         console.error('API Error:', error);
+        
+        // If HTTPS fails and we're on HTTPS, suggest HTTP fallback
+        if (error.name === 'TypeError' && error.message.includes('Failed to fetch') && 
+            window.location.protocol === 'https:' && BACKEND_URL.startsWith('https:')) {
+            
+            console.warn('HTTPS request failed, this might be due to missing SSL certificate on backend');
+            throw new Error('Connection failed: Backend server may not support HTTPS. Please configure SSL certificate or use HTTP backend URL.');
+        }
+        
         throw error;
     }
 }
@@ -74,6 +88,39 @@ function hideAlert() {
     if (el) el.classList.add('hidden');
 }
 
+// Connection testing function
+async function testConnection(url) {
+    try {
+        const response = await fetch(`${url}/api/health`, { 
+            method: 'GET',
+            timeout: 5000
+        });
+        return response.ok;
+    } catch {
+        return false;
+    }
+}
+
+// Try alternative backend URLs
+async function findWorkingBackend() {
+    const alternatives = [
+        BACKEND_URL,
+        'http://87.106.62.92:14137',
+        'https://87.106.62.92:14137'
+    ];
+    
+    for (const url of alternatives) {
+        console.log(`Testing backend: ${url}`);
+        if (await testConnection(url)) {
+            console.log(`Working backend found: ${url}`);
+            BACKEND_URL = url;
+            localStorage.setItem('bf_backend_url', url);
+            return url;
+        }
+    }
+    return null;
+}
+
 // Login functionality
 function initLogin() {
     const form = document.getElementById('loginForm');
@@ -81,6 +128,9 @@ function initLogin() {
     
     // Show current backend URL for debugging
     console.log('Backend URL:', BACKEND_URL);
+    
+    // Add connection test button
+    addConnectionTestButton();
     
     form.addEventListener('submit', async (e) => {
         e.preventDefault();
@@ -119,7 +169,83 @@ function initLogin() {
             
         } catch (err) {
             console.error('Login error:', err);
-            showAlert(err.message || 'Login failed. Please check your credentials and server connection.', 'danger');
+            
+            // If connection failed, try to find alternative backend
+            if (err.message.includes('Failed to fetch') || err.message.includes('Connection failed')) {
+                showAlert('Connection failed. Testing alternative connections...', 'info');
+                
+                const workingUrl = await findWorkingBackend();
+                if (workingUrl) {
+                    showAlert(`Found working connection: ${workingUrl}. Please try again.`, 'success');
+                } else {
+                    showAlert('Unable to connect to backend server. Please check your connection or try manual configuration.', 'danger');
+                    showManualConfigOption();
+                }
+            } else {
+                showAlert(err.message || 'Login failed. Please check your credentials and server connection.', 'danger');
+            }
+        }
+    });
+}
+
+// Add connection test button to login form
+function addConnectionTestButton() {
+    const form = document.getElementById('loginForm');
+    if (!form || document.getElementById('connectionTestBtn')) return;
+    
+    const button = document.createElement('button');
+    button.id = 'connectionTestBtn';
+    button.type = 'button';
+    button.className = 'login-btn';
+    button.style.marginTop = '10px';
+    button.style.backgroundColor = '#28a745';
+    button.innerHTML = '<i class="fas fa-network-wired"></i> Test Connection';
+    
+    button.addEventListener('click', async () => {
+        showAlert('Testing connection...', 'info');
+        const workingUrl = await findWorkingBackend();
+        if (workingUrl) {
+            showAlert(`Connection successful: ${workingUrl}`, 'success');
+        } else {
+            showAlert('No working backend found. Please check server status.', 'danger');
+            showManualConfigOption();
+        }
+    });
+    
+    form.appendChild(button);
+}
+
+// Show manual configuration option
+function showManualConfigOption() {
+    if (document.getElementById('manualConfig')) return;
+    
+    const container = document.querySelector('.login-card');
+    const configDiv = document.createElement('div');
+    configDiv.id = 'manualConfig';
+    configDiv.style.marginTop = '20px';
+    configDiv.style.padding = '15px';
+    configDiv.style.backgroundColor = 'var(--bg-darker)';
+    configDiv.style.borderRadius = '8px';
+    configDiv.style.border = '1px solid var(--border-color)';
+    
+    configDiv.innerHTML = `
+        <h4 style="margin: 0 0 10px 0; color: var(--text-primary);">Manual Backend Configuration</h4>
+        <input type="url" id="manualBackendUrl" placeholder="Enter backend URL (e.g., http://your-server:14137)" 
+               style="width: 100%; padding: 10px; margin: 10px 0; border-radius: 4px; border: 1px solid var(--border-color); background: var(--bg-primary); color: var(--text-primary);">
+        <button type="button" id="setBackendBtn" style="width: 100%; padding: 10px; background: var(--primary-color); color: white; border: none; border-radius: 4px; cursor: pointer;">
+            Set Backend URL
+        </button>
+    `;
+    
+    container.appendChild(configDiv);
+    
+    document.getElementById('setBackendBtn').addEventListener('click', () => {
+        const url = document.getElementById('manualBackendUrl').value.trim();
+        if (url) {
+            BACKEND_URL = url;
+            localStorage.setItem('bf_backend_url', url);
+            showAlert(`Backend URL set to: ${url}`, 'success');
+            configDiv.remove();
         }
     });
 }
