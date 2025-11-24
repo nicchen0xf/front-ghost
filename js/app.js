@@ -53,8 +53,13 @@ async function api(path, options = {}) {
         
         if (!res.ok) {
             let data = null;
-            try { data = await res.json(); } catch {}
-            const msg = (data && (data.message || data.error)) || `HTTP ${res.status}`;
+            try { 
+                data = await res.json(); 
+                console.log('Error response data:', data);
+            } catch (parseError) {
+                console.log('Failed to parse error response:', parseError);
+            }
+            const msg = (data && (data.message || data.error)) || `HTTP ${res.status}: ${res.statusText}`;
             throw new Error(msg);
         }
         
@@ -72,23 +77,32 @@ async function api(path, options = {}) {
             try {
                 const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(BACKEND_URL + path)}`;
                 const proxyRes = await fetch(proxyUrl, {
-                    ...options,
+                    method: options.method || 'GET',
                     headers: {
                         'Content-Type': 'application/json',
                         // Note: Authorization headers might be stripped by proxy
-                    }
+                    },
+                    body: options.body
                 });
                 
-                if (proxyRes.ok) {
-                    const data = await proxyRes.json();
-                    console.log('CORS proxy request successful');
-                    return data;
+                console.log('CORS proxy response status:', proxyRes.status);
+                
+                if (!proxyRes.ok) {
+                    let proxyData = null;
+                    try {
+                        proxyData = await proxyRes.json();
+                    } catch {}
+                    const proxyMsg = (proxyData && (proxyData.message || proxyData.error)) || `Proxy HTTP ${proxyRes.status}`;
+                    throw new Error(proxyMsg);
                 }
+                
+                const data = await proxyRes.json();
+                console.log('CORS proxy request successful:', data);
+                return data;
             } catch (proxyError) {
                 console.error('CORS proxy also failed:', proxyError);
+                throw proxyError;
             }
-            
-            throw new Error('Mixed content blocked: HTTPS site cannot connect to HTTP backend. Please use HTTPS backend or deploy frontend on HTTP.');
         }
         
         throw error;
