@@ -71,19 +71,39 @@ async function api(path, options = {}) {
         
         // If direct request fails and we're on HTTPS trying HTTP, try CORS proxy
         if (error.name === 'TypeError' && window.location.protocol === 'https:' && 
-            (BACKEND_URL.startsWith('http://') || error.message.includes('Mixed Content'))) {
+            (BACKEND_URL.startsWith('http://') || error.message.includes('Mixed Content') || error.message.includes('Failed to fetch'))) {
             
             console.log('Trying CORS proxy for mixed content issue...');
             try {
-                const proxyUrl = `https://api.allorigins.win/raw?url=${encodeURIComponent(BACKEND_URL + path)}`;
-                const proxyRes = await fetch(proxyUrl, {
-                    method: options.method || 'GET',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        // Note: Authorization headers might be stripped by proxy
-                    },
-                    body: options.body
-                });
+                // Try multiple CORS proxy services
+                const proxyServices = [
+                    `https://api.allorigins.win/raw?url=${encodeURIComponent(BACKEND_URL + path)}`,
+                    `https://corsproxy.io/?${encodeURIComponent(BACKEND_URL + path)}`,
+                    `https://proxy.cors.sh/${BACKEND_URL + path}`
+                ];
+                
+                let proxyRes = null;
+                for (const proxyUrl of proxyServices) {
+                    try {
+                        console.log(`Trying proxy: ${proxyUrl}`);
+                        proxyRes = await fetch(proxyUrl, {
+                            method: options.method || 'GET',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                // Note: Authorization headers might be stripped by proxy
+                            },
+                            body: options.body
+                        });
+                        if (proxyRes) break;
+                    } catch (proxyError) {
+                        console.log(`Proxy ${proxyUrl} failed:`, proxyError);
+                        continue;
+                    }
+                }
+                
+                if (!proxyRes) {
+                    throw new Error('All CORS proxy services failed');
+                }
                 
                 console.log('CORS proxy response status:', proxyRes.status);
                 
